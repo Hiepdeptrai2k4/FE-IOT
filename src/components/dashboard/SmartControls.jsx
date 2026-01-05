@@ -2,11 +2,17 @@ import { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 
 export default function SmartControls() {
-  const { currentGarden, updateGardenSettings, updateGardenAlerts } = useApp();
+  const { currentGarden, updateGardenSettings, updateGardenAlerts, controlDevice } = useApp();
   const [manualWatering, setManualWatering] = useState(false);
   const [manualLighting, setManualLighting] = useState(false);
 
   if (!currentGarden) return null;
+
+  // Lấy trạng thái thiết bị từ devices
+  const lightDevice = currentGarden.devices.find(d => d.category === 'light' && d.type === 'actuator');
+  const waterDevice = currentGarden.devices.find(d => d.category === 'water' && d.type === 'actuator');
+  const isLightOn = lightDevice?.state === 'ON';
+  const isPumpOn = waterDevice?.state === 'ON';
 
   const handleToggle = (setting, value) => {
     updateGardenSettings(currentGarden.id, { [setting]: value });
@@ -14,11 +20,17 @@ export default function SmartControls() {
 
   const handleManualWater = () => {
     setManualWatering(true);
-    setTimeout(() => setManualWatering(false), 3000);
+    controlDevice(currentGarden.id, 'water', true);
+    setTimeout(() => {
+      setManualWatering(false);
+      controlDevice(currentGarden.id, 'water', false);
+    }, 3000);
   };
 
   const handleManualLight = () => {
-    setManualLighting(!manualLighting);
+    const newState = !isLightOn;
+    setManualLighting(newState);
+    controlDevice(currentGarden.id, 'light', newState);
   };
 
   const handleBuzzerTest = () => {

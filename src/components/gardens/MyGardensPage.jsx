@@ -1,21 +1,49 @@
 import { useState } from 'react';
 import { useApp } from '../../context/AppContext';
+import ESP32SetupWizard from './ESP32SetupWizard';
+import bkLogo from "../../assets/images/image.png";
 
 export default function MyGardensPage() {
   const { gardens, selectGarden, user, logout, addGarden } = useApp();
   const [showAddForm, setShowAddForm] = useState(false);
+  const [setupStep, setSetupStep] = useState('info'); // 'info' or 'esp32'
   const [newGarden, setNewGarden] = useState({
     name: '',
     description: '',
     location: '',
     image: 'rooftop',
   });
+  const [esp32Device, setEsp32Device] = useState(null);
 
-  const handleAddGarden = (e) => {
+  const handleGardenInfoSubmit = (e) => {
     e.preventDefault();
+    // Chuyển sang bước setup ESP32
+    setSetupStep('esp32');
+  };
+
+  const handleESP32Complete = (deviceInfo) => {
+    setEsp32Device(deviceInfo);
+    // Tạo vườn với ESP32 device
+    completeAddGarden(deviceInfo);
+  };
+
+  const completeAddGarden = (deviceInfo) => {
     addGarden({
       ...newGarden,
-      devices: [],
+      devices: deviceInfo ? [{
+        id: deviceInfo.deviceId,
+        name: deviceInfo.name,
+        type: 'ESP32',
+        ipAddress: deviceInfo.ipAddress,
+        status: deviceInfo.status || 'online',
+        firmwareVersion: deviceInfo.firmwareVersion || 'Unknown',
+        sensors: [
+          { id: 'temp_1', type: 'DHT22', name: 'Cảm biến nhiệt độ' },
+          { id: 'soil_1', type: 'Capacitive', name: 'Cảm biến độ ẩm đất' },
+          { id: 'light_1', type: 'LDR', name: 'Cảm biến ánh sáng' },
+          { id: 'air_1', type: 'MQ135', name: 'Cảm biến chất lượng không khí' },
+        ],
+      }] : [],
       settings: {
         autoWatering: true,
         autoLighting: true,
@@ -36,8 +64,20 @@ export default function MyGardensPage() {
         lowMoisture: false,
       },
     });
+    
+    // Reset form
     setNewGarden({ name: '', description: '', location: '', image: 'rooftop' });
+    setEsp32Device(null);
+    setSetupStep('info');
     setShowAddForm(false);
+  };
+
+  const handleCancelESP32 = () => {
+    setSetupStep('info');
+  };
+
+  const handleSkipESP32 = () => {
+    completeAddGarden(null);
   };
 
   const gardenImages = {
@@ -65,6 +105,9 @@ export default function MyGardensPage() {
     },
     logo: {
       fontSize: '32px',
+      width: '48px',
+      height: '48px',
+      objectFit: 'contain',
     },
     headerTitle: {
       fontSize: '20px',
@@ -318,7 +361,7 @@ export default function MyGardensPage() {
     <div style={styles.container}>
       <header style={styles.header}>
         <div style={styles.headerLeft}>
-          <span style={styles.logo}>🌱</span>
+          <img src={bkLogo} alt="Logo Bách Khoa" style={styles.logo} />
           <span style={styles.headerTitle}>Eco Garden IoT</span>
         </div>
         <div style={styles.userSection}>
@@ -421,80 +464,90 @@ export default function MyGardensPage() {
               <span>🌱</span>
               <span>Thêm vườn mới</span>
             </h2>
-            <form style={styles.form} onSubmit={handleAddGarden}>
-              <div style={styles.formGroup}>
-                <label style={styles.label}>Tên vườn</label>
-                <input
-                  type="text"
-                  placeholder="VD: Vườn Sân Sau"
-                  value={newGarden.name}
-                  onChange={(e) => setNewGarden({ ...newGarden, name: e.target.value })}
-                  style={styles.input}
-                  required
-                  onFocus={(e) => e.target.style.borderColor = '#10B981'}
-                  onBlur={(e) => e.target.style.borderColor = '#E5E7EB'}
-                />
-              </div>
+            {setupStep === 'info' && (
+              <form style={styles.form} onSubmit={handleGardenInfoSubmit}>
+                <div style={styles.formGroup}>
+                  <label style={styles.label}>Tên vườn</label>
+                  <input
+                    type="text"
+                    placeholder="VD: Vườn Sân Sau"
+                    value={newGarden.name}
+                    onChange={(e) => setNewGarden({ ...newGarden, name: e.target.value })}
+                    style={styles.input}
+                    required
+                    onFocus={(e) => e.target.style.borderColor = '#10B981'}
+                    onBlur={(e) => e.target.style.borderColor = '#E5E7EB'}
+                  />
+                </div>
 
-              <div style={styles.formGroup}>
-                <label style={styles.label}>Mô tả</label>
-                <textarea
-                  placeholder="Mô tả về vườn của bạn..."
-                  value={newGarden.description}
-                  onChange={(e) => setNewGarden({ ...newGarden, description: e.target.value })}
-                  style={styles.textarea}
-                  required
-                  onFocus={(e) => e.target.style.borderColor = '#10B981'}
-                  onBlur={(e) => e.target.style.borderColor = '#E5E7EB'}
-                />
-              </div>
+                <div style={styles.formGroup}>
+                  <label style={styles.label}>Mô tả</label>
+                  <textarea
+                    placeholder="Mô tả về vườn của bạn..."
+                    value={newGarden.description}
+                    onChange={(e) => setNewGarden({ ...newGarden, description: e.target.value })}
+                    style={styles.textarea}
+                    required
+                    onFocus={(e) => e.target.style.borderColor = '#10B981'}
+                    onBlur={(e) => e.target.style.borderColor = '#E5E7EB'}
+                  />
+                </div>
 
-              <div style={styles.formGroup}>
-                <label style={styles.label}>Vị trí</label>
-                <input
-                  type="text"
-                  placeholder="VD: Tầng 2, Nhà riêng"
-                  value={newGarden.location}
-                  onChange={(e) => setNewGarden({ ...newGarden, location: e.target.value })}
-                  style={styles.input}
-                  required
-                  onFocus={(e) => e.target.style.borderColor = '#10B981'}
-                  onBlur={(e) => e.target.style.borderColor = '#E5E7EB'}
-                />
-              </div>
+                <div style={styles.formGroup}>
+                  <label style={styles.label}>Vị trí</label>
+                  <input
+                    type="text"
+                    placeholder="VD: Tầng 2, Nhà riêng"
+                    value={newGarden.location}
+                    onChange={(e) => setNewGarden({ ...newGarden, location: e.target.value })}
+                    style={styles.input}
+                    required
+                    onFocus={(e) => e.target.style.borderColor = '#10B981'}
+                    onBlur={(e) => e.target.style.borderColor = '#E5E7EB'}
+                  />
+                </div>
 
-              <div style={styles.formGroup}>
-                <label style={styles.label}>Loại vườn</label>
-                <select
-                  value={newGarden.image}
-                  onChange={(e) => setNewGarden({ ...newGarden, image: e.target.value })}
-                  style={styles.select}
-                >
-                  <option value="rooftop">🏙️ Sân thượng</option>
-                  <option value="balcony">🏡 Ban công</option>
-                </select>
-              </div>
+                <div style={styles.formGroup}>
+                  <label style={styles.label}>Loại vườn</label>
+                  <select
+                    value={newGarden.image}
+                    onChange={(e) => setNewGarden({ ...newGarden, image: e.target.value })}
+                    style={styles.select}
+                  >
+                    <option value="rooftop">🏙️ Sân thượng</option>
+                    <option value="balcony">🏡 Ban công</option>
+                  </select>
+                </div>
 
-              <div style={styles.formActions}>
-                <button
-                  type="button"
-                  style={styles.cancelButton}
-                  onClick={() => setShowAddForm(false)}
-                  onMouseEnter={(e) => e.target.style.backgroundColor = '#E5E7EB'}
-                  onMouseLeave={(e) => e.target.style.backgroundColor = '#F3F4F6'}
-                >
-                  Hủy
-                </button>
-                <button
-                  type="submit"
-                  style={styles.submitButton}
-                  onMouseEnter={(e) => e.target.style.backgroundColor = '#059669'}
-                  onMouseLeave={(e) => e.target.style.backgroundColor = '#10B981'}
-                >
-                  Thêm vườn
-                </button>
-              </div>
-            </form>
+                <div style={styles.formActions}>
+                  <button
+                    type="button"
+                    style={styles.cancelButton}
+                    onClick={() => setShowAddForm(false)}
+                    onMouseEnter={(e) => e.target.style.backgroundColor = '#E5E7EB'}
+                    onMouseLeave={(e) => e.target.style.backgroundColor = '#F3F4F6'}
+                  >
+                    Hủy
+                  </button>
+                  <button
+                    type="submit"
+                    style={styles.submitButton}
+                    onMouseEnter={(e) => e.target.style.backgroundColor = '#059669'}
+                    onMouseLeave={(e) => e.target.style.backgroundColor = '#10B981'}
+                  >
+                    Tiếp theo
+                  </button>
+                </div>
+              </form>
+            )}
+            {setupStep === 'esp32' && (
+              <ESP32SetupWizard
+                gardenName={newGarden.name}
+                onComplete={handleESP32Complete}
+                onCancel={handleCancelESP32}
+                onSkip={handleSkipESP32}
+              />
+            )}
           </div>
         </div>
       )}

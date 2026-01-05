@@ -1,17 +1,15 @@
 "use client";
 
 import * as React from "react";
-// Đã xóa số phiên bản
-import * as MenubarPrimitive from "@radix-ui/react-menubar";
-import { CheckIcon, ChevronRightIcon, CircleIcon } from "lucide-react";
+import * as MenubarPrimitive from "@radix-ui/react-menubar@1.1.6";
+import { CheckIcon, ChevronRightIcon, CircleIcon } from "lucide-react@0.487.0";
 
-// Giả định hàm cn nằm ở đây
-import { cn } from "./utils"; 
+import { cn } from "./utils";
 
-// --- BẮT ĐẦU ĐỊNH NGHĨA COMPONENTS (JSX/JS) ---
-
-// Đã loại bỏ Type Annotation
-function Menubar({ className, ...props }) {
+function Menubar({
+  className,
+  ...props
+}: React.ComponentProps<typeof MenubarPrimitive.Root>) {
   return (
     <MenubarPrimitive.Root
       data-slot="menubar"
@@ -24,30 +22,36 @@ function Menubar({ className, ...props }) {
   );
 }
 
-// Đã loại bỏ Type Annotation
-function MenubarMenu({ ...props }) {
+function MenubarMenu({
+  ...props
+}: React.ComponentProps<typeof MenubarPrimitive.Menu>) {
   return <MenubarPrimitive.Menu data-slot="menubar-menu" {...props} />;
 }
 
-// Đã loại bỏ Type Annotation
-function MenubarGroup({ ...props }) {
+function MenubarGroup({
+  ...props
+}: React.ComponentProps<typeof MenubarPrimitive.Group>) {
   return <MenubarPrimitive.Group data-slot="menubar-group" {...props} />;
 }
 
-// Đã loại bỏ Type Annotation
-function MenubarPortal({ ...props }) {
+function MenubarPortal({
+  ...props
+}: React.ComponentProps<typeof MenubarPrimitive.Portal>) {
   return <MenubarPrimitive.Portal data-slot="menubar-portal" {...props} />;
 }
 
-// Đã loại bỏ Type Annotation
-function MenubarRadioGroup({ ...props }) {
+function MenubarRadioGroup({
+  ...props
+}: React.ComponentProps<typeof MenubarPrimitive.RadioGroup>) {
   return (
     <MenubarPrimitive.RadioGroup data-slot="menubar-radio-group" {...props} />
   );
 }
 
-// Đã loại bỏ Type Annotation
-function MenubarTrigger({ className, ...props }) {
+function MenubarTrigger({
+  className,
+  ...props
+}: React.ComponentProps<typeof MenubarPrimitive.Trigger>) {
   return (
     <MenubarPrimitive.Trigger
       data-slot="menubar-trigger"
@@ -60,14 +64,13 @@ function MenubarTrigger({ className, ...props }) {
   );
 }
 
-// Đã loại bỏ Type Annotation
 function MenubarContent({
   className,
   align = "start",
   alignOffset = -4,
   sideOffset = 8,
   ...props
-}) {
+}: React.ComponentProps<typeof MenubarPrimitive.Content>) {
   return (
     <MenubarPortal>
       <MenubarPrimitive.Content
@@ -85,8 +88,15 @@ function MenubarContent({
   );
 }
 
-// Đã loại bỏ Type Annotation (và các khai báo Type bên trong)
-function MenubarItem({ className, inset, variant = "default", ...props }) {
+function MenubarItem({
+  className,
+  inset,
+  variant = "default",
+  ...props
+}: React.ComponentProps<typeof MenubarPrimitive.Item> & {
+  inset?: boolean;
+  variant?: "default" | "destructive";
+}) {
   return (
     <MenubarPrimitive.Item
       data-slot="menubar-item"
@@ -101,8 +111,12 @@ function MenubarItem({ className, inset, variant = "default", ...props }) {
   );
 }
 
-// Đã loại bỏ Type Annotation
-function MenubarCheckboxItem({ className, children, checked, ...props }) {
+function MenubarCheckboxItem({
+  className,
+  children,
+  checked,
+  ...props
+}: React.ComponentProps<typeof MenubarPrimitive.CheckboxItem>) {
   return (
     <MenubarPrimitive.CheckboxItem
       data-slot="menubar-checkbox-item"
@@ -123,8 +137,11 @@ function MenubarCheckboxItem({ className, children, checked, ...props }) {
   );
 }
 
-// Đã loại bỏ Type Annotation
-function MenubarRadioItem({ className, children, ...props }) {
+function MenubarRadioItem({
+  className,
+  children,
+  ...props
+}: React.ComponentProps<typeof MenubarPrimitive.RadioItem>) {
   return (
     <MenubarPrimitive.RadioItem
       data-slot="menubar-radio-item"
@@ -144,8 +161,13 @@ function MenubarRadioItem({ className, children, ...props }) {
   );
 }
 
-// Đã loại bỏ Type Annotation (và các khai báo Type bên trong)
-function MenubarLabel({ className, inset, ...props }) {
+function MenubarLabel({
+  className,
+  inset,
+  ...props
+}: React.ComponentProps<typeof MenubarPrimitive.Label> & {
+  inset?: boolean;
+}) {
   return (
     <MenubarPrimitive.Label
       data-slot="menubar-label"
@@ -159,8 +181,10 @@ function MenubarLabel({ className, inset, ...props }) {
   );
 }
 
-// Đã loại bỏ Type Annotation
-function MenubarSeparator({ className, ...props }) {
+function MenubarSeparator({
+  className,
+  ...props
+}: React.ComponentProps<typeof MenubarPrimitive.Separator>) {
   return (
     <MenubarPrimitive.Separator
       data-slot="menubar-separator"
@@ -170,8 +194,10 @@ function MenubarSeparator({ className, ...props }) {
   );
 }
 
-// Đã loại bỏ Type Annotation
-function MenubarShortcut({ className, ...props }) {
+function MenubarShortcut({
+  className,
+  ...props
+}: React.ComponentProps<"span">) {
   return (
     <span
       data-slot="menubar-shortcut"
@@ -184,13 +210,20 @@ function MenubarShortcut({ className, ...props }) {
   );
 }
 
-// Đã loại bỏ Type Annotation
-function MenubarSub({ ...props }) {
+function MenubarSub({
+  ...props
+}: React.ComponentProps<typeof MenubarPrimitive.Sub>) {
   return <MenubarPrimitive.Sub data-slot="menubar-sub" {...props} />;
 }
 
-// Đã loại bỏ Type Annotation (và các khai báo Type bên trong)
-function MenubarSubTrigger({ className, inset, children, ...props }) {
+function MenubarSubTrigger({
+  className,
+  inset,
+  children,
+  ...props
+}: React.ComponentProps<typeof MenubarPrimitive.SubTrigger> & {
+  inset?: boolean;
+}) {
   return (
     <MenubarPrimitive.SubTrigger
       data-slot="menubar-sub-trigger"
@@ -207,8 +240,10 @@ function MenubarSubTrigger({ className, inset, children, ...props }) {
   );
 }
 
-// Đã loại bỏ Type Annotation
-function MenubarSubContent({ className, ...props }) {
+function MenubarSubContent({
+  className,
+  ...props
+}: React.ComponentProps<typeof MenubarPrimitive.SubContent>) {
   return (
     <MenubarPrimitive.SubContent
       data-slot="menubar-sub-content"

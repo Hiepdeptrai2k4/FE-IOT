@@ -1,12 +1,15 @@
 import { useApp } from '../../context/AppContext';
+import bkLogo from "../../assets/images/image.png"
 
-export default function DashboardSidebar({ activeTab, setActiveTab, isOpen, setIsOpen }) {
+export default function DashboardSidebar({ activeTab, setActiveTab, sidebarOpen, setSidebarOpen }) {
   const { currentGarden, gardens, selectGarden, logout } = useApp();
 
   const menuItems = [
     { id: 'overview', icon: '📊', label: 'Tổng quan' },
     { id: 'monitoring', icon: '🌡️', label: 'Giám sát môi trường' },
     { id: 'controls', icon: '🎛️', label: 'Điều khiển thông minh' },
+    { id: 'schedule', icon: '⏰', label: 'Hẹn giờ tưới nước' },
+    { id: 'history', icon: '📈', label: 'Lịch sử & Biểu đồ' },
     { id: 'devices', icon: '📱', label: 'Quản lý thiết bị' },
     { id: 'settings', icon: '⚙️', label: 'Cài đặt' },
   ];
@@ -17,7 +20,7 @@ export default function DashboardSidebar({ activeTab, setActiveTab, isOpen, setI
       backgroundColor: 'white',
       borderRight: '1px solid #E5E7EB',
       position: 'fixed',
-      left: isOpen ? '0' : '-280px',
+      left: sidebarOpen ? '0' : '-280px',
       top: 0,
       bottom: 0,
       transition: 'left 0.3s',
@@ -38,6 +41,9 @@ export default function DashboardSidebar({ activeTab, setActiveTab, isOpen, setI
     },
     logoIcon: {
       fontSize: '28px',
+      width: '40px',
+      height: '40px',
+      objectFit: 'contain',
     },
     logoText: {
       fontSize: '18px',
@@ -54,6 +60,23 @@ export default function DashboardSidebar({ activeTab, setActiveTab, isOpen, setI
       color: '#374151',
       cursor: 'pointer',
       outline: 'none',
+    },
+    backButton: {
+      width: '100%',
+      padding: '10px 12px',
+      backgroundColor: '#DBEAFE',
+      color: '#1E40AF',
+      border: 'none',
+      borderRadius: '8px',
+      cursor: 'pointer',
+      fontSize: '13px',
+      fontWeight: '500',
+      marginTop: '12px',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: '8px',
+      transition: 'all 0.2s',
     },
     nav: {
       flex: 1,
@@ -128,7 +151,7 @@ export default function DashboardSidebar({ activeTab, setActiveTab, isOpen, setI
     <aside style={styles.sidebar}>
       <div style={styles.header}>
         <div style={styles.logo}>
-          <span style={styles.logoIcon}>🌱</span>
+          <img src={bkLogo} alt="Logo" style={styles.logoIcon} />
           <span style={styles.logoText}>Eco Garden IoT</span>
         </div>
         
@@ -143,6 +166,16 @@ export default function DashboardSidebar({ activeTab, setActiveTab, isOpen, setI
             </option>
           ))}
         </select>
+        
+        <button
+          style={styles.backButton}
+          onClick={() => selectGarden(null)}
+          onMouseEnter={(e) => e.target.style.backgroundColor = '#BFDBFE'}
+          onMouseLeave={(e) => e.target.style.backgroundColor = '#DBEAFE'}
+        >
+          <span>←</span>
+          <span>Quay lại danh sách vườn</span>
+        </button>
       </div>
 
       <nav style={styles.nav}>
@@ -188,9 +221,9 @@ export default function DashboardSidebar({ activeTab, setActiveTab, isOpen, setI
 
       <button
         style={styles.toggleBtn}
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={() => setSidebarOpen(!sidebarOpen)}
       >
-        {isOpen ? '◀' : '▶'}
+        {sidebarOpen ? '◀' : '▶'}
       </button>
     </aside>
   );

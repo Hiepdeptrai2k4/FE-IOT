@@ -1,15 +1,38 @@
 import { useState } from 'react';
 import { useApp } from '../../context/AppContext';
+import RegisterPage from './RegisterPage';
+import ForgotPasswordPage from './ForgotPasswordPage';
+import bkLogo from "../../assets/images/image.png"
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [view, setView] = useState('login'); // 'login', 'register', 'forgot'
   const { login } = useApp();
 
   const handleSubmit = (e) => {
     e.preventDefault();
     login(email, password);
   };
+
+  // Hiển thị trang đăng ký
+  if (view === 'register') {
+    return (
+      <RegisterPage
+        onBack={() => setView('login')}
+        onRegisterSuccess={() => setView('login')}
+      />
+    );
+  }
+
+  // Hiển thị trang quên mật khẩu
+  if (view === 'forgot') {
+    return (
+      <ForgotPasswordPage
+        onBack={() => setView('login')}
+      />
+    );
+  }
 
   const styles = {
     container: {
@@ -43,6 +66,8 @@ export default function LoginPage() {
       alignItems: 'center',
       justifyContent: 'center',
       fontSize: '40px',
+      padding: '12px',
+      objectFit: 'contain',
     },
     title: {
       fontSize: '28px',
@@ -98,13 +123,27 @@ export default function LoginPage() {
       fontSize: '14px',
       color: '#6B7280',
     },
+    links: {
+      display: 'flex',
+      justifyContent: 'space-between',
+      marginTop: '16px',
+      fontSize: '14px',
+    },
+    link: {
+      color: '#10B981',
+      cursor: 'pointer',
+      textDecoration: 'none',
+      transition: 'all 0.3s',
+    },
   };
 
   return (
     <div style={styles.container}>
       <div style={styles.card}>
         <div style={styles.header}>
-          <div style={styles.icon}>🌱</div>
+          <div style={styles.icon}>
+            <img src={bkLogo} alt="Logo Bách Khoa" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+          </div>
           <h1 style={styles.title}>Eco Garden IoT</h1>
           <p style={styles.subtitle}>Hệ thống quản lý vườn thông minh</p>
         </div>
@@ -146,6 +185,25 @@ export default function LoginPage() {
           >
             Đăng nhập
           </button>
+
+          <div style={styles.links}>
+            <span
+              style={styles.link}
+              onClick={() => setView('forgot')}
+              onMouseEnter={(e) => e.target.style.textDecoration = 'underline'}
+              onMouseLeave={(e) => e.target.style.textDecoration = 'none'}
+            >
+              Quên mật khẩu?
+            </span>
+            <span
+              style={styles.link}
+              onClick={() => setView('register')}
+              onMouseEnter={(e) => e.target.style.textDecoration = 'underline'}
+              onMouseLeave={(e) => e.target.style.textDecoration = 'none'}
+            >
+              Đăng ký tài khoản
+            </span>
+          </div>
         </form>
 
         <div style={styles.footer}>

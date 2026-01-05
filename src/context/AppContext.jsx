@@ -1,150 +1,211 @@
-import { createContext, useContext, useState, useEffect } from 'react';
-import { mockGardens } from '../data/mockData';
+import { createContext, useContext, useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { mockGardens } from "../data/mockData";
+import apiService from "../services/apiService";
+import websocketService from "../services/websocketService";
 
-const AppContext = createContext(undefined);
+const AppContext = createContext();
 
 export function AppProvider({ children }) {
   const [user, setUser] = useState(null);
   const [gardens, setGardens] = useState(mockGardens);
-  const [currentGardenId, setCurrentGardenId] = useState(null);
+  const [currentGardenId, setCurrentGardenId] = useState(mockGardens[0].id);
+  const [useRealBackend, setUseRealBackend] = useState(false);
+  const [backendConnected, setBackendConnected] = useState(false);
 
-  const currentGarden = gardens.find(g => g.id === currentGardenId) || null;
+  const navigate = useNavigate();
+  const currentGarden = gardens.find((g) => g.id === currentGardenId);
 
-  const login = (email, password) => {
-    // Mock login
-    setUser({
-      id: '1',
-      name: 'Nguyễn Văn An',
-      email: email,
-    });
+  // ===================== 1. LOGIN =====================
+  const login = (email) => {
+    setUser({ id: "1", name: "Admin", email });
+    navigate("/dashboard");
   };
 
-  const logout = () => {
-    setUser(null);
-    setCurrentGardenId(null);
-  };
+  const selectGarden = (id) => setCurrentGardenId(id);
 
-  const selectGarden = (gardenId) => {
-    setCurrentGardenId(gardenId);
-  };
-
-  const addGarden = (garden) => {
-    const newGarden = {
-      ...garden,
-      id: `garden-${Date.now()}`,
-    };
-    setGardens(prev => [...prev, newGarden]);
-  };
-
+  // ===================== UPDATE GARDEN SETTINGS =====================
   const updateGardenSettings = (gardenId, settings) => {
-    setGardens(prev =>
-      prev.map(g =>
+    setGardens((prev) =>
+      prev.map((g) =>
         g.id === gardenId
-          ? { ...g, settings: { ...g.settings, ...settings } }
+          ? {
+              ...g,
+              settings: { ...g.settings, ...settings },
+            }
           : g
       )
     );
   };
 
+  // ===================== UPDATE GARDEN ALERTS =====================
   const updateGardenAlerts = (gardenId, alerts) => {
-    setGardens(prev =>
-      prev.map(g =>
+    setGardens((prev) =>
+      prev.map((g) =>
         g.id === gardenId
-          ? { ...g, alerts: { ...g.alerts, ...alerts } }
+          ? {
+              ...g,
+              alerts: { ...g.alerts, ...alerts },
+            }
           : g
       )
     );
   };
 
-  const addDevice = (gardenId, device) => {
-    const newDevice = {
-      ...device,
-      id: `device-${Date.now()}`,
-    };
-    setGardens(prev =>
-      prev.map(g =>
+  // ===================== 2. CONTROL DEVICE =====================
+  const controlDevice = async (gardenId, category, state) => {
+    const stateInt = state ? 1 : 0;
+
+    if (useRealBackend) {
+      try {
+        if (category === "light") await apiService.controlLight(stateInt);
+        if (category === "water") await apiService.controlPump(stateInt);
+      } catch (err) {
+        console.error("Control device error:", err);
+      }
+    }
+
+    // Optimistic UI
+    setGardens((prev) =>
+      prev.map((g) =>
         g.id === gardenId
-          ? { ...g, devices: [...g.devices, newDevice] }
+          ? {
+              ...g,
+              devices: g.devices.map((d) =>
+                d.category === category
+                  ? { ...d, state: state ? "ON" : "OFF" }
+                  : d
+              ),
+            }
           : g
       )
     );
   };
 
-  const removeDevice = (gardenId, deviceId) => {
-    setGardens(prev =>
-      prev.map(g =>
-        g.id === gardenId
-          ? { ...g, devices: g.devices.filter(d => d.id !== deviceId) }
-          : g
-      )
-    );
+  // ===================== 3. TOGGLE BACKEND =====================
+  const toggleBackend = async () => {
+    if (!useRealBackend) {
+      // Bật backend mode - kết nối WebSocket
+      try {
+        websocketService.connect();
+        setUseRealBackend(true);
+        // WebSocket sẽ tự động set connected khi onopen
+      } catch (error) {
+        console.error("Lỗi kết nối WebSocket:", error);
+        alert("Không thể kết nối WebSocket (port 8080)");
+      }
+    } else {
+      // Tắt backend mode
+      websocketService.disconnect();
+      setUseRealBackend(false);
+      setBackendConnected(false);
+    }
   };
 
-  // Simulate real-time updates for current garden
+  // ===================== TRACK WEBSOCKET CONNECTION =====================
   useEffect(() => {
-    if (!currentGarden) return;
+    if (!useRealBackend) {
+      setBackendConnected(false);
+      return;
+    }
 
-    const interval = setInterval(() => {
-      setGardens(prev =>
-        prev.map(g => {
+    // Subscribe to connection changes
+    const unsubscribe = websocketService.onConnectionChange((connected) => {
+      setBackendConnected(connected);
+    });
+
+    // Check initial connection status
+    setBackendConnected(websocketService.isConnected);
+
+    return () => {
+      unsubscribe();
+    };
+  }, [useRealBackend]);
+
+  // ===================== 4. WEBSOCKET REALTIME =====================
+  useEffect(() => {
+    if (!useRealBackend || !currentGardenId) return;
+
+    const unsubscribe = websocketService.onMessage((data) => {
+      const topic = data.topic;
+      const val = Number(data.value);
+
+      if (Number.isNaN(val)) return;
+
+      setGardens((prev) =>
+        prev.map((g) => {
           if (g.id !== currentGardenId) return g;
 
-          // Update soil moisture
-          const lastMoisture = g.environmentalData.soilMoisture[g.environmentalData.soilMoisture.length - 1];
-          const newMoisture = Math.max(20, Math.min(80, lastMoisture + (Math.random() - 0.5) * 5));
-          const updatedMoistureData = [...g.environmentalData.soilMoisture.slice(1), newMoisture];
+          let env = { ...g.environmentalData };
 
-          // Update countdown
-          const newNextWatering = g.settings.nextWatering > 0 ? g.settings.nextWatering - 1 : 0;
-          
-          // Trigger alert when countdown reaches 0
-          let newAlerts = { ...g.alerts };
-          if (newNextWatering === 0 && g.settings.autoWatering) {
-            newAlerts = {
-              ...newAlerts,
-              wateringAlert: true,
-              buzzerActive: true,
-            };
-            // Auto-dismiss after 10 seconds
-            setTimeout(() => {
-              updateGardenAlerts(g.id, { wateringAlert: false, buzzerActive: false });
-              updateGardenSettings(g.id, { nextWatering: 3600 });
-            }, 10000);
+          switch (topic) {
+            case "light":
+              env.lightLevel = val;
+              break;
+
+            case "temperature":
+              env.temperature = val;
+              break;
+
+            case "humidity":
+              env.humidity = val;
+              break;
+
+            case "co2":
+              env.airQuality = val;
+              break;
+
+            case "soil_moisture":
+              env.soilMoisture = [...env.soilMoisture.slice(1), val];
+              break;
+
+            case "pump":
+              return {
+                ...g,
+                devices: g.devices.map((d) =>
+                  d.category === "water"
+                    ? { ...d, state: val === 1 ? "ON" : "OFF" }
+                    : d
+                ),
+              };
+
+            case "lamp":
+              return {
+                ...g,
+                devices: g.devices.map((d) =>
+                  d.category === "light"
+                    ? { ...d, state: val === 1 ? "ON" : "OFF" }
+                    : d
+                ),
+              };
+
+            default:
+              break;
           }
 
-          return {
-            ...g,
-            environmentalData: {
-              ...g.environmentalData,
-              soilMoisture: updatedMoistureData,
-            },
-            settings: {
-              ...g.settings,
-              nextWatering: newNextWatering,
-            },
-            alerts: newAlerts,
-          };
+          return { ...g, environmentalData: env };
         })
       );
-    }, 1000);
+    });
 
-    return () => clearInterval(interval);
-  }, [currentGardenId]);
+    return () => unsubscribe();
+  }, [useRealBackend, currentGardenId]);
 
+  // ===================== PROVIDER =====================
   return (
     <AppContext.Provider
       value={{
         user,
         login,
-        logout,
         gardens,
         currentGarden,
         selectGarden,
-        addGarden,
+        useRealBackend,
+        backendConnected,
+        controlDevice,
+        toggleBackend,
         updateGardenSettings,
         updateGardenAlerts,
-        addDevice,
-        removeDevice,
       }}
     >
       {children}
@@ -152,10 +213,8 @@ export function AppProvider({ children }) {
   );
 }
 
-export function useApp() {
-  const context = useContext(AppContext);
-  if (context === undefined) {
-    throw new Error('useApp must be used within an AppProvider');
-  }
-  return context;
-}
+export const useApp = () => {
+  const ctx = useContext(AppContext);
+  if (!ctx) throw new Error("useApp must be used inside AppProvider");
+  return ctx;
+};

@@ -1,4 +1,5 @@
 import { useApp } from '../../context/AppContext';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart } from 'recharts';
 
 export default function EnvironmentalMonitoring() {
   const { currentGarden } = useApp();
@@ -8,16 +9,23 @@ export default function EnvironmentalMonitoring() {
   const soilMoisture = currentGarden.environmentalData.soilMoisture[currentGarden.environmentalData.soilMoisture.length - 1];
   const airQuality = currentGarden.environmentalData.airQuality;
 
-  // Calculate AQI gauge position
-  const getAQIColor = (aqi) => {
-    if (aqi > 80) return '#10B981';
-    if (aqi > 50) return '#F59E0B';
-    return '#EF4444';
+  // Transform soil moisture data cho chart
+  const soilMoistureChartData = currentGarden.environmentalData.soilMoisture.map((value, index) => ({
+    time: `-${5 - index}m`,
+    value: Math.round(value * 10) / 10,
+  }));
+
+  // Calculate Air Quality gauge position (giá trị ADC từ MQ135)
+  // Giá trị ADC càng cao = không khí càng sạch (CO2 thấp)
+  const getAirQualityColor = (adcValue) => {
+    if (adcValue > 900) return '#10B981'; // Tốt
+    if (adcValue > 600) return '#F59E0B'; // Trung bình
+    return '#EF4444'; // Kém
   };
 
-  const getAQILabel = (aqi) => {
-    if (aqi > 80) return 'Tốt';
-    if (aqi > 50) return 'Trung bình';
+  const getAirQualityLabel = (adcValue) => {
+    if (adcValue > 900) return 'Tốt';
+    if (adcValue > 600) return 'Trung bình';
     return 'Kém';
   };
 
@@ -183,28 +191,45 @@ export default function EnvironmentalMonitoring() {
             Độ ẩm đất (6 phút gần nhất)
           </h2>
           <div style={styles.chartContainer}>
-            <div style={styles.chartLine}>
-              {currentGarden.environmentalData.soilMoisture.map((value, index) => (
-                <div
-                  key={index}
-                  style={{
-                    ...styles.bar,
-                    height: `${(value / 100) * 180}px`,
-                    backgroundColor: value > 60 ? '#10B981' : value > 40 ? '#F59E0B' : '#EF4444',
+            <ResponsiveContainer width="100%" height="100%" minHeight={250}>
+              <AreaChart data={soilMoistureChartData}>
+                <defs>
+                  <linearGradient id="colorMoisture" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#10B981" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="#10B981" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
+                <XAxis 
+                  dataKey="time" 
+                  stroke="#6B7280"
+                  style={{ fontSize: '12px' }}
+                />
+                <YAxis 
+                  domain={[0, 100]} 
+                  stroke="#6B7280"
+                  style={{ fontSize: '12px' }}
+                  label={{ value: '%', angle: -90, position: 'insideLeft' }}
+                />
+                <Tooltip 
+                  contentStyle={{
+                    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                    border: '1px solid #E5E7EB',
+                    borderRadius: '8px',
                   }}
-                >
-                  <span style={styles.barLabel}>{value.toFixed(0)}%</span>
-                </div>
-              ))}
-            </div>
-            <div style={styles.xAxis}>
-              <span>-5m</span>
-              <span>-4m</span>
-              <span>-3m</span>
-              <span>-2m</span>
-              <span>-1m</span>
-              <span>Hiện tại</span>
-            </div>
+                  formatter={(value) => [`${value}%`, 'Độ ẩm đất']}
+                />
+                <Area 
+                  type="monotone" 
+                  dataKey="value" 
+                  stroke="#10B981"
+                  strokeWidth={2}
+                  fill="url(#colorMoisture)"
+                  dot={{ fill: '#10B981', r: 4 }}
+                  activeDot={{ r: 6 }}
+                />
+              </AreaChart>
+            </ResponsiveContainer>
           </div>
           <div style={styles.statsGrid}>
             <div style={styles.statCard}>
@@ -230,7 +255,7 @@ export default function EnvironmentalMonitoring() {
         <div style={styles.card}>
           <h2 style={styles.cardTitle}>
             <span>🌿</span>
-            Chất lượng không khí (AQI)
+            Chất lượng không khí (MQ135)
           </h2>
           <div style={styles.gaugeContainer}>
             <div style={styles.gauge}>
@@ -246,15 +271,15 @@ export default function EnvironmentalMonitoring() {
                     width: '200px',
                     height: '100px',
                     borderRadius: '100px 100px 0 0',
-                    border: `16px solid ${getAQIColor(airQuality)}`,
+                    border: `16px solid ${getAirQualityColor(airQuality)}`,
                     borderBottom: 'none',
                   }}
                 ></div>
               </div>
               <div style={styles.gaugeValue}>{airQuality}</div>
             </div>
-            <div style={{ ...styles.gaugeLabel, color: getAQIColor(airQuality) }}>
-              {getAQILabel(airQuality)}
+            <div style={{ ...styles.gaugeLabel, color: getAirQualityColor(airQuality) }}>
+              {getAirQualityLabel(airQuality)} (ADC)
             </div>
           </div>
           <div style={styles.statsGrid}>

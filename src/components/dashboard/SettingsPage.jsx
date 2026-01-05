@@ -1,7 +1,10 @@
+import { useState } from 'react';
 import { useApp } from '../../context/AppContext';
+import ServiceInfo from './ServiceInfo';
 
 export default function SettingsPage() {
   const { currentGarden, updateGardenSettings } = useApp();
+  const [activeTab, setActiveTab] = useState('general'); // 'general' hoặc 'service'
 
   if (!currentGarden) return null;
 
@@ -33,6 +36,30 @@ export default function SettingsPage() {
     container: {
       padding: '32px',
       maxWidth: '900px',
+    },
+    tabContainer: {
+      marginBottom: '24px',
+      borderBottom: '2px solid #F3F4F6',
+    },
+    tabList: {
+      display: 'flex',
+      gap: '8px',
+    },
+    tab: {
+      padding: '12px 24px',
+      fontSize: '15px',
+      fontWeight: '500',
+      color: '#6B7280',
+      backgroundColor: 'transparent',
+      border: 'none',
+      borderBottom: '2px solid transparent',
+      cursor: 'pointer',
+      transition: 'all 0.3s',
+      marginBottom: '-2px',
+    },
+    tabActive: {
+      color: '#10B981',
+      borderBottomColor: '#10B981',
     },
     header: {
       marginBottom: '32px',
@@ -185,8 +212,35 @@ export default function SettingsPage() {
     </div>
   );
 
+  // Render Service Info tab
+  if (activeTab === 'service') {
+    return <ServiceInfo />;
+  }
+
   return (
     <div style={styles.container}>
+      <div style={styles.tabContainer}>
+        <div style={styles.tabList}>
+          <button
+            style={{
+              ...styles.tab,
+              ...(activeTab === 'general' ? styles.tabActive : {}),
+            }}
+            onClick={() => setActiveTab('general')}
+          >
+            ⚙️ Cài đặt chung
+          </button>
+          <button
+            style={{
+              ...styles.tab,
+              ...(activeTab === 'service' ? styles.tabActive : {}),
+            }}
+            onClick={() => setActiveTab('service')}
+          >
+            🔧 Service & API
+          </button>
+        </div>
+      </div>
       <div style={styles.header}>
         <h1 style={styles.title}>Cài đặt</h1>
         <p style={styles.subtitle}>Tùy chỉnh các thông số và cấu hình hệ thống</p>

@@ -5,6 +5,9 @@ import EnvironmentalMonitoring from './EnvironmentalMonitoring';
 import SmartControls from './SmartControls';
 import DeviceManager from './DeviceManager';
 import SettingsPage from './SettingsPage';
+import SchedulePage from './SchedulePage';
+import HistoryPage from './HistoryPage';
+import BackendToggle from '../BackendToggle';
 
 export default function DashboardLayout() {
   const [activeTab, setActiveTab] = useState('overview');
@@ -47,6 +50,10 @@ export default function DashboardLayout() {
         return <EnvironmentalMonitoring />;
       case 'controls':
         return <SmartControls />;
+      case 'schedule':
+        return <SchedulePage />;
+      case 'history':
+        return <HistoryPage />;
       case 'devices':
         return <DeviceManager />;
       case 'settings':
@@ -61,12 +68,17 @@ export default function DashboardLayout() {
       <DashboardSidebar
         activeTab={activeTab}
         setActiveTab={setActiveTab}
-        isOpen={sidebarOpen}
-        setIsOpen={setSidebarOpen}
+        sidebarOpen={sidebarOpen}
+        setSidebarOpen={setSidebarOpen}
       />
-      <main style={styles.main}>
-        {renderContent()}
-      </main>
+      <div style={styles.main}>{renderContent()}</div>
+      <BackendToggle />
+      <button
+        style={styles.mobileMenuBtn}
+        onClick={() => setSidebarOpen(!sidebarOpen)}
+      >
+        ☰
+      </button>
     </div>
   );
 }

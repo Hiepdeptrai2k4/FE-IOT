@@ -1,0 +1,13 @@
+{
+  "name": "mock-sensor-sender",
+  "version": "1.0.0",
+  "description": "Mock ESP32 sensor data sender",
+  "main": "mock-sensor-sender.js",
+  "scripts": {
+    "start": "node mock-sensor-sender.js",
+    "start:http": "node mock-sensor-sender.js http"
+  },
+  "dependencies": {
+    "mqtt": "^5.0.0"
+  }
+}
