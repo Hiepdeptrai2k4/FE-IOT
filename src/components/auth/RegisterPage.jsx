@@ -57,10 +57,21 @@ export default function RegisterPage({ onBack, onRegisterSuccess }) {
 
     setIsLoading(true);
 
-    // Mock API call - trong thực tế sẽ gọi API đăng ký
+    // Mock API call - lưu user vào localStorage
     setTimeout(() => {
       setIsLoading(false);
-      alert('Đăng ký thành công! Vui lòng đăng nhập.');
+
+      // Tạo user object
+      const newUser = {
+        id: Date.now().toString(),
+        name: formData.name.trim(),
+        email: formData.email.trim()
+      };
+
+      // Lưu vào localStorage
+      localStorage.setItem('user', JSON.stringify(newUser));
+
+      alert('Đăng ký thành công! Bạn có thể đăng nhập ngay bây giờ.');
       onRegisterSuccess();
     }, 1500);
   };

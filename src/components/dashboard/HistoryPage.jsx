@@ -352,7 +352,7 @@ export default function HistoryPage() {
       </div>
 
       {/* Chart */}
-      <div style={styles.chartCard}>
+      <div style={{ ...styles.chartCard, minWidth: 0 }}>
         <div style={styles.chartHeader}>
           <div style={styles.chartTitle}>
             <span style={{ fontSize: '24px' }}>{selectedSensorInfo?.icon}</span>
@@ -372,8 +372,9 @@ export default function HistoryPage() {
           </div>
         ) : (
           <>
-            <ResponsiveContainer width="100%" height={400} minHeight={300}>
-              <AreaChart data={chartData}>
+            <div style={{ width: '100%', minWidth: 0, minHeight: 300 }}>
+              <ResponsiveContainer width="100%" height={400} minHeight={300}>
+                <AreaChart data={chartData}>
                 <defs>
                   <linearGradient id={`color-${selectedSensor}`} x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor={selectedSensorInfo?.color} stopOpacity={0.3} />
@@ -420,8 +421,9 @@ export default function HistoryPage() {
                   dot={false}
                   activeDot={{ r: 6, fill: selectedSensorInfo?.color }}
                 />
-              </AreaChart>
-            </ResponsiveContainer>
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
 
             <div style={styles.dataInfo}>
               <strong>📊 Thông tin:</strong> Hiển thị {chartData.length} điểm dữ liệu từ{' '}

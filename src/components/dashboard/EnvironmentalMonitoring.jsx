@@ -71,6 +71,7 @@ export default function EnvironmentalMonitoring() {
       position: 'relative',
       height: '250px',
       marginBottom: '16px',
+      minWidth: 0,
     },
     chartLine: {
       position: 'relative',
@@ -225,8 +226,9 @@ export default function EnvironmentalMonitoring() {
                   stroke="#10B981"
                   strokeWidth={2}
                   fill="url(#colorMoisture)"
-                  dot={{ fill: '#10B981', r: 4 }}
-                  activeDot={{ r: 6 }}
+                  dot={false}
+                  activeDot={{ r: 6, fill: '#10B981' }}
+                  cursor={{ stroke: '#9CA3AF', strokeDasharray: '4 4' }}
                 />
               </AreaChart>
             </ResponsiveContainer>

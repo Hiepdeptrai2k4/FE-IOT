@@ -16,10 +16,49 @@ export function AppProvider({ children }) {
   const navigate = useNavigate();
   const currentGarden = gardens.find((g) => g.id === currentGardenId);
 
+  // ===================== RESTORE USER FROM LOCALSTORAGE =====================
+  useEffect(() => {
+    const savedUser = localStorage.getItem('user');
+    if (savedUser) {
+      try {
+        const userData = JSON.parse(savedUser);
+        setUser(userData);
+      } catch (error) {
+        console.error('Error parsing saved user:', error);
+        localStorage.removeItem('user');
+      }
+    }
+  }, []);
+
   // ===================== 1. LOGIN =====================
-  const login = (email) => {
-    setUser({ id: "1", name: "Admin", email });
+  const login = (email, password) => {
+    // Kiểm tra credentials với localStorage
+    const savedUser = localStorage.getItem('user');
+    if (savedUser) {
+      try {
+        const userData = JSON.parse(savedUser);
+        if (userData.email === email) {
+          setUser(userData);
+          navigate("/dashboard");
+          return;
+        }
+      } catch (error) {
+        console.error('Error parsing saved user:', error);
+      }
+    }
+
+    // Nếu không tìm thấy user hoặc sai thông tin, tạo user mới
+    const newUser = { id: Date.now().toString(), name: email.split('@')[0], email };
+    localStorage.setItem('user', JSON.stringify(newUser));
+    setUser(newUser);
     navigate("/dashboard");
+  };
+
+  // ===================== LOGOUT =====================
+  const logout = () => {
+    setUser(null);
+    localStorage.removeItem('user');
+    navigate("/");
   };
 
   const selectGarden = (id) => setCurrentGardenId(id);
@@ -49,6 +88,13 @@ export function AppProvider({ children }) {
             }
           : g
       )
+    );
+  };
+
+  // ===================== UPDATE GARDEN INFO (name, location, description) =====================
+  const updateGardenInfo = (gardenId, info) => {
+    setGardens((prev) =>
+      prev.map((g) => (g.id === gardenId ? { ...g, ...info } : g))
     );
   };
 
@@ -197,6 +243,7 @@ export function AppProvider({ children }) {
       value={{
         user,
         login,
+        logout,
         gardens,
         currentGarden,
         selectGarden,
@@ -206,6 +253,7 @@ export function AppProvider({ children }) {
         toggleBackend,
         updateGardenSettings,
         updateGardenAlerts,
+        updateGardenInfo,
       }}
     >
       {children}

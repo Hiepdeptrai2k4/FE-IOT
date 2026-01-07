@@ -137,7 +137,7 @@ export default function DashboardOverview() {
       {/* BIỂU ĐỒ ĐỘ ẨM ĐẤT THỜI GIAN THỰC */}
       <div style={styles.chartSection}>
         <h2 style={styles.sectionTitle}>Biểu đồ Độ ẩm đất (%)</h2>
-        <div style={{ width: '100%', height: '250px' }}>
+        <div style={{ width: '100%', height: '250px', minWidth: 0 }}>
           <ResponsiveContainer width="100%" height="100%" minHeight={200}>
             <AreaChart data={chartData}>
               <defs>
@@ -156,6 +156,9 @@ export default function DashboardOverview() {
                 stroke="#3B82F6" 
                 fillOpacity={1} 
                 fill="url(#colorMoisture)" 
+                dot={false}
+                activeDot={{ r: 6, fill: '#3B82F6' }}
+                cursor={{ stroke: '#9CA3AF', strokeDasharray: '4 4' }}
                 isAnimationActive={false} // Tắt animation để biểu đồ mượt khi update liên tục
               />
             </AreaChart>

@@ -12,6 +12,23 @@ export default function LoginPage() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+
+    // Kiểm tra xem có user đã đăng ký không
+    const savedUser = localStorage.getItem('user');
+    if (savedUser) {
+      try {
+        const userData = JSON.parse(savedUser);
+        if (userData.email === email) {
+          // Đăng nhập với user đã đăng ký
+          login(email, password);
+          return;
+        }
+      } catch (error) {
+        console.error('Error parsing saved user:', error);
+      }
+    }
+
+    // Nếu không tìm thấy user hoặc email khác, tạo user mới (auto register)
     login(email, password);
   };
 
@@ -207,7 +224,9 @@ export default function LoginPage() {
         </form>
 
         <div style={styles.footer}>
-          <p>Demo: Sử dụng bất kỳ email/password nào</p>
+          <p style={{ fontSize: '13px', color: '#6B7280' }}>
+            Nhập email và mật khẩu để tiếp tục
+          </p>
         </div>
       </div>
     </div>

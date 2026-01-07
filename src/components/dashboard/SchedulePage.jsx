@@ -38,6 +38,7 @@ export default function SchedulePage() {
     enabled: true,
     days: [],
   });
+  const [toast, setToast] = useState(null);
 
   const daysOfWeek = [
     { id: 'Mon', label: 'T2' },
@@ -49,6 +50,11 @@ export default function SchedulePage() {
     { id: 'Sun', label: 'CN' },
   ];
 
+  const showToast = (message, type = 'success') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 2000);
+  };
+
   const toggleSchedule = (id) => {
     setSchedules(prev =>
       prev.map(s => (s.id === id ? { ...s, enabled: !s.enabled } : s))
@@ -58,6 +64,9 @@ export default function SchedulePage() {
   const deleteSchedule = (id) => {
     if (confirm('Bạn có chắc muốn xóa lịch hẹn giờ này?')) {
       setSchedules(prev => prev.filter(s => s.id !== id));
+      showToast('Đã xóa lịch hẹn giờ', 'success');
+    } else {
+      showToast('Đã hủy xóa lịch hẹn', 'warning');
     }
   };
 
@@ -89,6 +98,7 @@ export default function SchedulePage() {
       days: [],
     });
     setShowAddForm(false);
+    showToast('Thêm lịch hẹn thành công', 'success');
   };
 
   const styles = {
@@ -345,6 +355,28 @@ export default function SchedulePage() {
       fontSize: '14px',
       color: '#9CA3AF',
     },
+    toast: {
+      position: 'fixed',
+      bottom: '24px',
+      right: '24px',
+      padding: '12px 16px',
+      borderRadius: '10px',
+      color: '#1F2937',
+      boxShadow: '0 10px 30px rgba(0,0,0,0.1)',
+      zIndex: 1200,
+      fontWeight: '600',
+      border: '1px solid #E5E7EB',
+    },
+    toastSuccess: {
+      backgroundColor: '#ECFDF5',
+      color: '#065F46',
+      borderColor: '#A7F3D0',
+    },
+    toastWarning: {
+      backgroundColor: '#FFFBEB',
+      color: '#92400E',
+      borderColor: '#FCD34D',
+    },
   };
 
   return (
@@ -548,6 +580,17 @@ export default function SchedulePage() {
               </div>
             </form>
           </div>
+        </div>
+      )}
+
+      {toast && (
+        <div
+          style={{
+            ...styles.toast,
+            ...(toast.type === 'warning' ? styles.toastWarning : styles.toastSuccess),
+          }}
+        >
+          {toast.message}
         </div>
       )}
     </div>

@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useApp } from '../../context/AppContext';
-import ServiceInfo from './ServiceInfo';
 
 export default function SettingsPage() {
-  const { currentGarden, updateGardenSettings } = useApp();
-  const [activeTab, setActiveTab] = useState('general'); // 'general' hoặc 'service'
+  const { currentGarden, updateGardenSettings, updateGardenInfo } = useApp();
+  const [manualNextWatering, setManualNextWatering] = useState(
+    Math.max(1, Math.round((currentGarden?.settings?.nextWatering || 3600) / 60))
+  );
 
   if (!currentGarden) return null;
 
@@ -32,34 +33,23 @@ export default function SettingsPage() {
     });
   };
 
+  // Đồng bộ khi chọn vườn khác hoặc thay đổi từ nơi khác
+  useEffect(() => {
+    setManualNextWatering(
+      Math.max(1, Math.round((currentGarden?.settings?.nextWatering || 3600) / 60))
+    );
+  }, [currentGarden]);
+
+  const applyManualNextWatering = () => {
+    const minutes = Math.max(1, manualNextWatering || 1);
+    setManualNextWatering(minutes);
+    updateGardenSettings(currentGarden.id, { nextWatering: minutes * 60 });
+  };
+
   const styles = {
     container: {
       padding: '32px',
       maxWidth: '900px',
-    },
-    tabContainer: {
-      marginBottom: '24px',
-      borderBottom: '2px solid #F3F4F6',
-    },
-    tabList: {
-      display: 'flex',
-      gap: '8px',
-    },
-    tab: {
-      padding: '12px 24px',
-      fontSize: '15px',
-      fontWeight: '500',
-      color: '#6B7280',
-      backgroundColor: 'transparent',
-      border: 'none',
-      borderBottom: '2px solid transparent',
-      cursor: 'pointer',
-      transition: 'all 0.3s',
-      marginBottom: '-2px',
-    },
-    tabActive: {
-      color: '#10B981',
-      borderBottomColor: '#10B981',
     },
     header: {
       marginBottom: '32px',
@@ -212,35 +202,8 @@ export default function SettingsPage() {
     </div>
   );
 
-  // Render Service Info tab
-  if (activeTab === 'service') {
-    return <ServiceInfo />;
-  }
-
   return (
     <div style={styles.container}>
-      <div style={styles.tabContainer}>
-        <div style={styles.tabList}>
-          <button
-            style={{
-              ...styles.tab,
-              ...(activeTab === 'general' ? styles.tabActive : {}),
-            }}
-            onClick={() => setActiveTab('general')}
-          >
-            ⚙️ Cài đặt chung
-          </button>
-          <button
-            style={{
-              ...styles.tab,
-              ...(activeTab === 'service' ? styles.tabActive : {}),
-            }}
-            onClick={() => setActiveTab('service')}
-          >
-            🔧 Service & API
-          </button>
-        </div>
-      </div>
       <div style={styles.header}>
         <h1 style={styles.title}>Cài đặt</h1>
         <p style={styles.subtitle}>Tùy chỉnh các thông số và cấu hình hệ thống</p>
@@ -260,7 +223,7 @@ export default function SettingsPage() {
           <input
             type="text"
             value={currentGarden.name}
-            readOnly
+            onChange={(e) => updateGardenInfo(currentGarden.id, { name: e.target.value })}
             style={{ ...styles.input, width: '200px' }}
           />
         </div>
@@ -272,7 +235,7 @@ export default function SettingsPage() {
           <input
             type="text"
             value={currentGarden.location}
-            readOnly
+            onChange={(e) => updateGardenInfo(currentGarden.id, { location: e.target.value })}
             style={{ ...styles.input, width: '250px' }}
           />
         </div>
@@ -313,6 +276,41 @@ export default function SettingsPage() {
             <option value="Mỗi 2 giờ">Mỗi 2 giờ</option>
             <option value="Mỗi 4 giờ">Mỗi 4 giờ</option>
           </select>
+        </div>
+        <div style={{ ...styles.settingRow, ...styles.settingRowLast }}>
+          <div style={styles.settingLeft}>
+            <div style={styles.settingLabel}>Thời gian tới lần tưới tiếp theo</div>
+            <div style={styles.settingDescription}>
+              Nhập số phút còn lại (frontend giả lập, không phụ thuộc backend)
+            </div>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <input
+              type="number"
+              min="1"
+              value={manualNextWatering}
+              onChange={(e) => setManualNextWatering(Number(e.target.value))}
+              onBlur={applyManualNextWatering}
+              style={{ ...styles.input, width: '140px' }}
+            />
+            <span>phút</span>
+            <button
+              style={{
+                padding: '10px 14px',
+                backgroundColor: '#10B981',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                fontWeight: '600',
+              }}
+              onClick={applyManualNextWatering}
+              onMouseEnter={(e) => (e.target.style.backgroundColor = '#059669')}
+              onMouseLeave={(e) => (e.target.style.backgroundColor = '#10B981')}
+            >
+              Cập nhật
+            </button>
+          </div>
         </div>
         <div style={styles.infoBox}>
           <div style={styles.infoTitle}>ℹ️ Thông tin</div>

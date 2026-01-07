@@ -2,7 +2,7 @@ import { useApp } from '../../context/AppContext';
 import bkLogo from "../../assets/images/image.png"
 
 export default function DashboardSidebar({ activeTab, setActiveTab, sidebarOpen, setSidebarOpen }) {
-  const { currentGarden, gardens, selectGarden, logout } = useApp();
+  const { currentGarden, gardens, selectGarden, logout, user } = useApp();
 
   const menuItems = [
     { id: 'overview', icon: '📊', label: 'Tổng quan' },
@@ -206,8 +206,8 @@ export default function DashboardSidebar({ activeTab, setActiveTab, sidebarOpen,
 
       <div style={styles.footer}>
         <div style={styles.userInfo}>
-          <div style={styles.userName}>Nguyễn Văn An</div>
-          <div style={styles.userEmail}>user@example.com</div>
+          <div style={styles.userName}>{user?.name || 'User'}</div>
+          <div style={styles.userEmail}>{user?.email || 'user@example.com'}</div>
         </div>
         <button
           style={styles.logoutBtn}
