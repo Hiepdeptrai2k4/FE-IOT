@@ -16,6 +16,26 @@ export default function DashboardOverview() {
     return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
+  // Format wateringSchedule để hiển thị
+  const formatWateringSchedule = (schedule) => {
+    if (typeof schedule === 'number') {
+      if (schedule < 60) {
+        return `Mỗi ${schedule} phút`;
+      } else if (schedule === 60) {
+        return 'Mỗi 1 giờ';
+      } else {
+        const hours = Math.floor(schedule / 60);
+        const minutes = schedule % 60;
+        if (minutes === 0) {
+          return `Mỗi ${hours} giờ`;
+        } else {
+          return `Mỗi ${hours} giờ ${minutes} phút`;
+        }
+      }
+    }
+    return schedule; // Giữ nguyên nếu là string cũ
+  };
+
   const onlineDevices = currentGarden.devices.filter(d => d.status === 'online').length;
   const totalDevices = currentGarden.devices.length;
   
@@ -174,7 +194,7 @@ export default function DashboardOverview() {
               {formatTime(currentGarden.settings.nextWatering)}
             </div>
             <div style={styles.cardFooter}>
-              Lịch: {currentGarden.settings.wateringSchedule}
+              Lịch: {formatWateringSchedule(currentGarden.settings.wateringSchedule)}
             </div>
           </div>
 

@@ -2,9 +2,8 @@ import { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 
 export default function SmartControls() {
-  const { currentGarden, updateGardenSettings, updateGardenAlerts, controlDevice } = useApp();
+  const { currentGarden, updateGardenSettings, controlDevice } = useApp();
   const [manualWatering, setManualWatering] = useState(false);
-  const [manualLighting, setManualLighting] = useState(false);
 
   if (!currentGarden) return null;
 
@@ -13,6 +12,29 @@ export default function SmartControls() {
   const waterDevice = currentGarden.devices.find(d => d.category === 'water' && d.type === 'actuator');
   const isLightOn = lightDevice?.state === 'ON';
   const isPumpOn = waterDevice?.state === 'ON';
+  
+  // Sync manualLighting với device state
+  const manualLighting = isLightOn;
+
+  // Format wateringSchedule để hiển thị
+  const formatWateringSchedule = (schedule) => {
+    if (typeof schedule === 'number') {
+      if (schedule < 60) {
+        return `Mỗi ${schedule} phút`;
+      } else if (schedule === 60) {
+        return 'Mỗi 1 giờ';
+      } else {
+        const hours = Math.floor(schedule / 60);
+        const minutes = schedule % 60;
+        if (minutes === 0) {
+          return `Mỗi ${hours} giờ`;
+        } else {
+          return `Mỗi ${hours} giờ ${minutes} phút`;
+        }
+      }
+    }
+    return schedule; // Giữ nguyên nếu là string cũ
+  };
 
   const handleToggle = (setting, value) => {
     updateGardenSettings(currentGarden.id, { [setting]: value });
@@ -29,15 +51,9 @@ export default function SmartControls() {
 
   const handleManualLight = () => {
     const newState = !isLightOn;
-    setManualLighting(newState);
+    // controlDevice sẽ tự động cập nhật UI (Optimistic UI)
+    // Không cần backend, hoạt động hoàn toàn ở frontend
     controlDevice(currentGarden.id, 'light', newState);
-  };
-
-  const handleBuzzerTest = () => {
-    updateGardenAlerts(currentGarden.id, { buzzerActive: true });
-    setTimeout(() => {
-      updateGardenAlerts(currentGarden.id, { buzzerActive: false });
-    }, 2000);
   };
 
   const styles = {
@@ -241,7 +257,7 @@ export default function SmartControls() {
             </div>
             {currentGarden.settings.autoWatering && (
               <div style={styles.info}>
-                ✓ Hệ thống sẽ tự động tưới nước theo lịch: {currentGarden.settings.wateringSchedule}
+                ✓ Hệ thống sẽ tự động tưới nước theo lịch: {formatWateringSchedule(currentGarden.settings.wateringSchedule)}
               </div>
             )}
           </div>
@@ -345,65 +361,6 @@ export default function SmartControls() {
               <span>{manualLighting ? '🌙' : '☀️'}</span>
               <span>{manualLighting ? 'Tắt đèn' : 'Bật đèn'}</span>
             </button>
-          </div>
-        </div>
-
-        {/* Security System */}
-        <div style={styles.card}>
-          <div style={styles.cardHeader}>
-            <span style={styles.cardIcon}>🔔</span>
-            <div>
-              <h2 style={styles.cardTitle}>Hệ thống an toàn</h2>
-            </div>
-          </div>
-
-          <div style={styles.controlGroup}>
-            <div style={styles.controlLabel}>
-              <span style={styles.label}>Còi cảnh báo</span>
-              <span
-                style={{
-                  ...styles.status,
-                  ...(currentGarden.alerts.buzzerActive ? styles.statusActive : styles.statusInactive),
-                }}
-              >
-                {currentGarden.alerts.buzzerActive ? '● ĐANG KÊU' : '○ TẮT'}
-              </span>
-            </div>
-            <button
-              style={{
-                ...styles.button,
-                backgroundColor: '#EF4444',
-              }}
-              onClick={handleBuzzerTest}
-              onMouseEnter={(e) => e.target.style.backgroundColor = '#DC2626'}
-              onMouseLeave={(e) => e.target.style.backgroundColor = '#EF4444'}
-            >
-              <span>🔊</span>
-              <span>Kiểm tra còi</span>
-            </button>
-            <div style={styles.warning}>
-              ⚠ Còi sẽ tự động kêu khi có cảnh báo tưới nước hoặc phát hiện bất thường
-            </div>
-          </div>
-
-          <div style={styles.divider}></div>
-
-          <div style={styles.controlGroup}>
-            <span style={styles.label}>Trạng thái cảnh báo</span>
-            <div style={{ marginTop: '12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 12px', backgroundColor: '#F9FAFB', borderRadius: '6px' }}>
-                <span style={{ fontSize: '14px', color: '#6B7280' }}>Cảnh báo tưới</span>
-                <span style={{ fontSize: '14px', fontWeight: '500', color: currentGarden.alerts.wateringAlert ? '#EF4444' : '#10B981' }}>
-                  {currentGarden.alerts.wateringAlert ? '⚠ CÓ' : '✓ KHÔNG'}
-                </span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 12px', backgroundColor: '#F9FAFB', borderRadius: '6px' }}>
-                <span style={{ fontSize: '14px', color: '#6B7280' }}>Độ ẩm thấp</span>
-                <span style={{ fontSize: '14px', fontWeight: '500', color: currentGarden.alerts.lowMoisture ? '#EF4444' : '#10B981' }}>
-                  {currentGarden.alerts.lowMoisture ? '⚠ CÓ' : '✓ KHÔNG'}
-                </span>
-              </div>
-            </div>
           </div>
         </div>
       </div>

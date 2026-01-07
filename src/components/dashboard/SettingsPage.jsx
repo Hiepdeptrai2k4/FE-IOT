@@ -9,28 +9,39 @@ export default function SettingsPage() {
 
   if (!currentGarden) return null;
 
-  const handleScheduleChange = (schedule) => {
-    let seconds;
-    switch (schedule) {
-      case 'Mỗi 30 phút':
-        seconds = 1800;
-        break;
-      case 'Mỗi 1 giờ':
-        seconds = 3600;
-        break;
-      case 'Mỗi 2 giờ':
-        seconds = 7200;
-        break;
-      case 'Mỗi 4 giờ':
-        seconds = 14400;
-        break;
-      default:
-        seconds = 3600;
+  // Lấy số phút từ wateringSchedule (có thể là string cũ hoặc number mới)
+  const getWateringMinutes = () => {
+    const schedule = currentGarden.settings.wateringSchedule;
+    if (typeof schedule === 'number') {
+      return schedule;
     }
+    // Convert từ string cũ sang số phút
+    switch (schedule) {
+      case 'Mỗi 30 phút': return 30;
+      case 'Mỗi 1 giờ': return 60;
+      case 'Mỗi 2 giờ': return 120;
+      case 'Mỗi 4 giờ': return 240;
+      default: return 60;
+    }
+  };
+
+  const [wateringMinutes, setWateringMinutes] = useState(getWateringMinutes());
+
+  // Sync với currentGarden khi thay đổi
+  useEffect(() => {
+    setWateringMinutes(getWateringMinutes());
+  }, [currentGarden?.settings.wateringSchedule]);
+
+  const handleScheduleChange = (minutes) => {
+    const minutesNum = Number(minutes);
+    if (isNaN(minutesNum) || minutesNum < 1) return;
+    
+    const seconds = minutesNum * 60;
     updateGardenSettings(currentGarden.id, {
-      wateringSchedule: schedule,
+      wateringSchedule: minutesNum, // Lưu số phút thay vì string
       nextWatering: seconds,
     });
+    setWateringMinutes(minutesNum);
   };
 
   // Đồng bộ khi chọn vườn khác hoặc thay đổi từ nơi khác
@@ -263,19 +274,38 @@ export default function SettingsPage() {
           <div style={styles.settingLeft}>
             <div style={styles.settingLabel}>Lịch tưới</div>
             <div style={styles.settingDescription}>
-              Chu kỳ tưới nước tự động
+              Chu kỳ tưới nước tự động (nhập số phút bất kỳ)
             </div>
           </div>
-          <select
-            value={currentGarden.settings.wateringSchedule}
-            onChange={(e) => handleScheduleChange(e.target.value)}
-            style={styles.select}
-          >
-            <option value="Mỗi 30 phút">Mỗi 30 phút</option>
-            <option value="Mỗi 1 giờ">Mỗi 1 giờ</option>
-            <option value="Mỗi 2 giờ">Mỗi 2 giờ</option>
-            <option value="Mỗi 4 giờ">Mỗi 4 giờ</option>
-          </select>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <input
+              type="number"
+              min="1"
+              max="1440"
+              value={wateringMinutes}
+              onChange={(e) => setWateringMinutes(Number(e.target.value))}
+              onBlur={(e) => handleScheduleChange(e.target.value)}
+              style={{ ...styles.input, width: '120px' }}
+            />
+            <span>phút</span>
+            <button
+              style={{
+                padding: '10px 14px',
+                backgroundColor: '#10B981',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                fontWeight: '600',
+                fontSize: '14px',
+              }}
+              onClick={() => handleScheduleChange(wateringMinutes)}
+              onMouseEnter={(e) => (e.target.style.backgroundColor = '#059669')}
+              onMouseLeave={(e) => (e.target.style.backgroundColor = '#10B981')}
+            >
+              Cập nhật
+            </button>
+          </div>
         </div>
         <div style={{ ...styles.settingRow, ...styles.settingRowLast }}>
           <div style={styles.settingLeft}>

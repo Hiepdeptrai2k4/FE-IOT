@@ -10,7 +10,6 @@ export default function DashboardSidebar({ activeTab, setActiveTab, sidebarOpen,
     { id: 'controls', icon: '🎛️', label: 'Điều khiển thông minh' },
     { id: 'schedule', icon: '⏰', label: 'Hẹn giờ tưới nước' },
     { id: 'history', icon: '📈', label: 'Lịch sử & Biểu đồ' },
-    { id: 'devices', icon: '📱', label: 'Quản lý thiết bị' },
     { id: 'settings', icon: '⚙️', label: 'Cài đặt' },
   ];
 

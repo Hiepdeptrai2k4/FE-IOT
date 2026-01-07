@@ -3,7 +3,6 @@ import DashboardSidebar from './DashboardSidebar';
 import DashboardOverview from './DashboardOverview';
 import EnvironmentalMonitoring from './EnvironmentalMonitoring';
 import SmartControls from './SmartControls';
-import DeviceManager from './DeviceManager';
 import SettingsPage from './SettingsPage';
 import SchedulePage from './SchedulePage';
 import HistoryPage from './HistoryPage';
@@ -54,8 +53,6 @@ export default function DashboardLayout() {
         return <SchedulePage />;
       case 'history':
         return <HistoryPage />;
-      case 'devices':
-        return <DeviceManager />;
       case 'settings':
         return <SettingsPage />;
       default:

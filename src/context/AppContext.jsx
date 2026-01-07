@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { mockGardens } from "../data/mockData";
 import apiService from "../services/apiService";
@@ -236,6 +236,157 @@ export function AppProvider({ children }) {
 
     return () => unsubscribe();
   }, [useRealBackend, currentGardenId]);
+
+  // ===================== 5. AUTO LIGHTING CONTROL =====================
+  const lastLightCheck = useRef({ lightLevel: null, action: null });
+  
+  useEffect(() => {
+    if (!currentGardenId || !gardens.length) return;
+
+    const garden = gardens.find(g => g.id === currentGardenId);
+    if (!garden) return;
+
+    const lightDevice = garden.devices.find(d => d.category === 'light' && d.type === 'actuator');
+    const currentLightState = lightDevice?.state === 'ON';
+    const lightLevel = garden.environmentalData.lightLevel || 0;
+    const threshold = garden.settings.lightingThreshold || 300;
+    const autoLighting = garden.settings.autoLighting;
+
+    // Chỉ tự động điều khiển khi bật chế độ autoLighting
+    if (!autoLighting) {
+      lastLightCheck.current = { lightLevel: null, action: null };
+      return;
+    }
+
+    // Tránh kiểm tra lại nếu giá trị ánh sáng và action giống lần trước
+    const shouldTurnOn = lightLevel < threshold && !currentLightState;
+    const shouldTurnOff = lightLevel >= threshold && currentLightState;
+    
+    if (shouldTurnOn && lastLightCheck.current.action !== 'on') {
+      console.log(`💡 Tự động bật đèn: Ánh sáng (${lightLevel.toFixed(1)} lux) < ngưỡng (${threshold} lux)`);
+      controlDevice(garden.id, 'light', true);
+      lastLightCheck.current = { lightLevel, action: 'on' };
+    }
+    else if (shouldTurnOff && lastLightCheck.current.action !== 'off') {
+      console.log(`💡 Tự động tắt đèn: Ánh sáng (${lightLevel.toFixed(1)} lux) >= ngưỡng (${threshold} lux)`);
+      controlDevice(garden.id, 'light', false);
+      lastLightCheck.current = { lightLevel, action: 'off' };
+    }
+    else if (!shouldTurnOn && !shouldTurnOff) {
+      // Reset khi không cần action
+      lastLightCheck.current = { lightLevel, action: null };
+    }
+  }, [
+    gardens,
+    currentGardenId,
+    controlDevice
+  ]);
+
+  // ===================== 6. AUTO WATERING CONTROL =====================
+  const lastWateringCheck = useRef({ gardenId: null, nextWatering: null });
+  
+  useEffect(() => {
+    if (!currentGardenId || !gardens.length) return;
+
+    const interval = setInterval(() => {
+      const garden = gardens.find(g => g.id === currentGardenId);
+      if (!garden) return;
+
+      const autoWatering = garden.settings.autoWatering;
+      if (!autoWatering) {
+        lastWateringCheck.current = { gardenId: null, nextWatering: null };
+        return;
+      }
+
+      // Lấy chu kỳ tưới (có thể là số phút hoặc string cũ)
+      const getWateringIntervalMinutes = () => {
+        const schedule = garden.settings.wateringSchedule;
+        if (typeof schedule === 'number') {
+          return schedule;
+        }
+        // Convert từ string cũ
+        switch (schedule) {
+          case 'Mỗi 30 phút': return 30;
+          case 'Mỗi 1 giờ': return 60;
+          case 'Mỗi 2 giờ': return 120;
+          case 'Mỗi 4 giờ': return 240;
+          default: return 60;
+        }
+      };
+
+      const intervalMinutes = getWateringIntervalMinutes();
+      const intervalSeconds = intervalMinutes * 60;
+      const currentNextWatering = garden.settings.nextWatering || intervalSeconds;
+
+      // Nếu đã đến lúc tưới (nextWatering <= 0) và chưa tưới lần này
+      if (currentNextWatering <= 0 && 
+          (lastWateringCheck.current.gardenId !== garden.id || 
+           lastWateringCheck.current.nextWatering !== currentNextWatering)) {
+        
+        console.log(`💧 Tự động tưới nước: Đã đến lúc tưới (chu kỳ: ${intervalMinutes} phút)`);
+        
+        // Đánh dấu đã kiểm tra
+        lastWateringCheck.current = { gardenId: garden.id, nextWatering: currentNextWatering };
+        
+        // Bật bơm
+        controlDevice(garden.id, 'water', true);
+        
+        // Tưới trong 3 giây
+        setTimeout(() => {
+          controlDevice(garden.id, 'water', false);
+          console.log(`💧 Hoàn thành tưới nước`);
+          
+          // Reset nextWatering về chu kỳ mới
+          setGardens((prev) =>
+            prev.map((g) =>
+              g.id === garden.id
+                ? {
+                    ...g,
+                    settings: {
+                      ...g.settings,
+                      nextWatering: intervalSeconds,
+                    },
+                  }
+                : g
+            )
+          );
+          
+          // Reset check để có thể tưới lần tiếp theo
+          lastWateringCheck.current = { gardenId: null, nextWatering: null };
+        }, 3000);
+      }
+    }, 1000); // Kiểm tra mỗi giây
+
+    return () => clearInterval(interval);
+  }, [gardens, currentGardenId, controlDevice]);
+
+  // ===================== 7. COUNTDOWN NEXT WATERING =====================
+  useEffect(() => {
+    if (!currentGardenId || !gardens.length) return;
+
+    const interval = setInterval(() => {
+      setGardens((prev) =>
+        prev.map((g) => {
+          if (g.id !== currentGardenId) return g;
+          if (!g.settings.autoWatering) return g;
+          
+          const currentNextWatering = g.settings.nextWatering || 0;
+          if (currentNextWatering > 0) {
+            return {
+              ...g,
+              settings: {
+                ...g.settings,
+                nextWatering: currentNextWatering - 1,
+              },
+            };
+          }
+          return g;
+        })
+      );
+    }, 1000); // Đếm ngược mỗi giây
+
+    return () => clearInterval(interval);
+  }, [currentGardenId]);
 
   // ===================== PROVIDER =====================
   return (
